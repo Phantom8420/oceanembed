@@ -821,6 +821,23 @@ def regime_table(col="rmse_T"):
             f"<tbody>{body}</tbody></table>")
 
 
+def regime_bar(df, col, radius, facet_size):
+    """Grouped per-regime RMSE bars with plain-English labels (lower is better)."""
+    df = df.assign(regime=df.regime_class.map(_REGLAB),
+                   model_=df.model.map(lambda m: _MLABEL.get(m, m)),
+                   holdout=df.test_set.map({"spatial": "Bay of Bengal holdout",
+                                            "temporal": "JJAS 2022 holdout"}))
+    unit = "°C" if col.endswith("T") else "PSU"
+    f = px.bar(df, x="regime", y=col, color="model_", barmode="group", facet_col="holdout",
+               color_discrete_map={_MLABEL.get(k, k): v for k, v in MC.items()},
+               category_orders={"regime": list(_REGLAB.values())},
+               labels={col: f"RMSE ({unit}) · lower is better", "regime": "", "model_": ""})
+    f.update_traces(marker_cornerradius=radius)
+    f.for_each_annotation(lambda a: a.update(text=a.text.split("=")[-1],
+                                             font=dict(size=facet_size + 2, color="#5A6B75")))
+    return f
+
+
 def need_pred():
     if pred is None:
         st.warning(f"no predictions for **{model} / {holdout}** — run `python -m src.evaluate`")
@@ -942,16 +959,12 @@ elif page == "home":
         pool = metrics[(metrics.depth_level == -1)
                        & metrics.model.isin(["baseline", "oceanembed"])
                        & metrics.regime_class.isin(REGIMES)]
-        f = px.bar(pool, x="regime_class", y="rmse_T", color="model", barmode="group",
-                   facet_col="test_set", color_discrete_map=MC)
-        f.update_traces(marker_cornerradius=12)
-        f.for_each_annotation(lambda a: a.update(text=a.text.split("=")[-1].upper(),
-                                                 font=dict(size=9, color="#8FA0AB")))
-        f.update_layout(height=280)
+        f = regime_bar(pool, "rmse_T", 12, 9)
         ov[0].markdown('<div class="oe-mini" style="margin-bottom:.4rem">'
-                       '<div class="lab">OceanEmbed vs baseline · RMSE·T by regime</div></div>',
-                       unsafe_allow_html=True)
-        ov[0].plotly_chart(style_fig(f, h=280), use_container_width=True, config=_CHART_CFG)
+                       '<div class="lab">OceanEmbed vs baseline · RMSE·T by regime '
+                       '(lower is better)</div></div>', unsafe_allow_html=True)
+        ov[0].plotly_chart(style_fig(f, h=300, legend_top=False), use_container_width=True,
+                           config=_CHART_CFG)
 
     # skill by depth — RMSE_T, barrier-layer, current holdout
     if metrics is not None:
@@ -1219,13 +1232,9 @@ elif page == "s4":
         pool = metrics[metrics.depth_level == -1]
         keep = [m_ for m_ in ["baseline", "oceanembed", model] if m_ in pool.model.unique()]
         sub = pool[pool.model.isin(keep) & pool.regime_class.isin(REGIMES)]
-        f = px.bar(sub, x="regime_class", y=var, color="model", barmode="group",
-                   facet_col="test_set", color_discrete_map=MC)
-        f.update_traces(marker_cornerradius=14)
-        f.for_each_annotation(lambda a: a.update(text=a.text.split("=")[-1].upper(),
-                                                 font=dict(size=10, color="#8FA0AB")))
-        f.update_layout(height=380)
-        st.plotly_chart(style_fig(f, h=380), use_container_width=True, config=_CHART_CFG)
+        f = regime_bar(sub, var, 14, 10)
+        st.plotly_chart(style_fig(f, h=400, legend_top=False), use_container_width=True,
+                        config=_CHART_CFG)
         with st.expander("full table — per test set × regime"):
             st.dataframe(pool[pool.regime_class.isin(REGIMES + ["all"])]
                          .pivot_table(index=["test_set", "regime_class"], columns="model",
