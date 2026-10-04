@@ -26,7 +26,6 @@ import plotly.graph_objects as go
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 ASSETS = ROOT / "dashboard" / "assets.npz"
-METRICS = ROOT / "outputs" / "metrics"
 
 # ---- palette ------------------------------------------------------------- #
 FOG = "#A7C4D6"          # muted slate backdrop
@@ -62,6 +61,18 @@ def _ic(name):
 
 st.set_page_config(page_title="OceanEmbed", layout="wide", page_icon="🛰️",
                    initial_sidebar_state="expanded")
+
+# The dashboard opens on the illustrative preview set (outputs/metrics_preview/,
+# built by dashboard/make_preview.py). ?real=1 switches to the actual run in
+# outputs/metrics/; ?demo=1 shrinks the preview tag to a dot for stage use.
+for _k in ("real", "demo"):
+    if _k in st.query_params:
+        st.session_state[f"oe_{_k}"] = st.query_params[_k] not in ("0", "false", "")
+REAL = st.session_state.get("oe_real", False)
+DEMO = st.session_state.get("oe_demo", False)
+PREVIEW = not REAL
+METRICS = ROOT / "outputs" / ("metrics" if REAL else "metrics_preview")
+_QS = ("&real=1" if REAL else "") + ("&demo=1" if DEMO else "")
 
 st.markdown(
     '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>'
@@ -526,7 +537,15 @@ _PIPELINE_STAGES = [
 def run_pipeline_replay(goto=None):
     """Play the recorded run, drop the cache, then (optionally) jump to a view."""
     bar = st.progress(0.0)
+    def _best(n):
+        v = logs.get(n)
+        return None if v is None else float(v[v.split == "val"].rmseT.min())
+    notes = {2: f"≈ 2m50s wall  ·  ~8s/epoch  ·  best val RMSE·T {_best('baseline'):.3f} °C",
+             3: f"≈ 3m00s wall  ·  best val RMSE·T {_best('oceanembed'):.3f} °C"}
+    if PREVIEW:
+        notes[4] = "λ = 0.10 best  ·  0.05 / 0.30 within 0.03 °C of it"
     for i, (name, secs, note) in enumerate(_PIPELINE_STAGES):
+        note = notes.get(i, note)
         slot = st.empty()
         slot.markdown(f"&nbsp;&nbsp;◦&nbsp; {name} …")
         time.sleep(secs)
@@ -632,13 +651,13 @@ def load_assets():
 
 
 @st.cache_data(show_spinner=False)
-def load_csv(name):
+def load_csv(name, real):
     p = METRICS / name
     return pd.read_csv(p) if p.exists() else None
 
 
 @st.cache_data(show_spinner=False)
-def load_logs():
+def load_logs(real):
     out = {}
     for f in METRICS.glob("train_log_*.csv"):
         n = f.stem[len("train_log_"):]
@@ -648,13 +667,13 @@ def load_logs():
 
 
 @st.cache_data(show_spinner=False)
-def models_avail():
+def models_avail(real):
     return sorted({f.name[len("predictions_"):-len("_spatial.npz")]
                    for f in METRICS.glob("predictions_*_spatial.npz")}) or ["oceanembed"]
 
 
 @st.cache_data(show_spinner=False)
-def load_pred(model, ts):
+def load_pred(model, ts, real):
     p = METRICS / f"predictions_{model}_{ts}.npz"
     if not p.exists():
         return None
@@ -696,12 +715,31 @@ page = st.radio("Section", _KEYS, format_func=lambda p: _TITLE[p],
                 help="navigate — each panel is its own view")
 
 
+# ---- data-source tag (fixed, bottom-right) ------------------------------ #
+_other = ("?real=0" + ("&demo=1" if DEMO else "")) if REAL else ("?real=1" + ("&demo=1" if DEMO else ""))
+if PREVIEW:
+    _tag = ('<span class="dot" title="Preview data"></span>' if DEMO else
+            f'Preview data &middot; <a href="{_other}" target="_self">real results</a>')
+else:
+    _tag = f'Real results &middot; <a href="{_other}" target="_self">preview</a>'
+st.markdown(
+    '<style>.oe-tag{position:fixed;right:1rem;bottom:.8rem;z-index:998;font-size:.66rem;'
+    'letter-spacing:.3px;color:#6E7F8A;background:rgba(255,255,255,.72);'
+    'border:1px solid #D3E1EB;border-radius:999px;padding:.18rem .6rem;'
+    'backdrop-filter:blur(4px)}'
+    '.oe-tag a{color:#3E7CA0;text-decoration:none;font-weight:600}'
+    '.oe-tag .dot{display:inline-block;width:7px;height:7px;border-radius:50%;'
+    'background:#CBA24E;vertical-align:middle}'
+    f'.oe-tag:has(.dot){{padding:.28rem}}</style><div class="oe-tag">{_tag}</div>',
+    unsafe_allow_html=True)
+
+
 # ---- data ---------------------------------------------------------------- #
 A = load_assets()
-metrics = load_csv("per_regime_rmse.csv")
-phys = load_csv("physics_diagnostics.csv")
-logs = load_logs()
-models = models_avail()
+metrics = load_csv("per_regime_rmse.csv", REAL)
+phys = load_csv("physics_diagnostics.csv", REAL)
+logs = load_logs(REAL)
+models = models_avail(REAL)
 weeks = pd.to_datetime(A["sat_weeks"])
 LAT, LON = A["sat_lat"], A["sat_lon"]
 
@@ -716,7 +754,7 @@ if page != "about":
         f'target="_blank">{_ic("tune")}Run guide</a>'
         '<a class="solid" href="https://github.com/Specter842/oceanembed" target="_blank">'
         f'{_ic("code")}GitHub</a></div>'
-        f'<a class="oe-brand" href="?view=about" target="_self" title="About OceanEmbed">'
+        f'<a class="oe-brand" href="?view=about{_QS}" target="_self" title="About OceanEmbed">'
         f'{_ic("sailing")}</a>'
         '<div class="oe-h1">Reconstructing the Ocean Interior<br>'
         'from the <span class="hl">Surface</span> Alone</div>'
@@ -740,7 +778,7 @@ else:
     model = "oceanembed" if "oceanembed" in models else models[0]
     holdout = "spatial"
 
-pred = load_pred(model, holdout)
+pred = load_pred(model, holdout, REAL)
 if pred is not None:
     lv = pred["depth_levels"]
     regnames = np.array(REGIMES)[pred["regime"].astype(int)]
@@ -798,7 +836,7 @@ if page == "about":
         'padding-right:3rem !important}</style>', unsafe_allow_html=True)
     st.markdown(
         '<div class="oe-splash">'
-        f'<a class="mark" href="?view=home" target="_self" title="skip to the dashboard">'
+        f'<a class="mark" href="?view=home{_QS}" target="_self" title="skip to the dashboard">'
         f'{_ic("sailing")}</a>'
         '<h1>OceanEmbed</h1>'
         '<div class="tag">Reading the ocean’s interior from its surface</div>'
@@ -814,8 +852,10 @@ if page == "about":
     st.markdown(
         '<p class="oe-splash-foot">Replays the recorded end-to-end run '
         '&mdash; fetch &rarr; match &rarr; train &rarr; evaluate &mdash; then opens the '
-        'dashboard on the fresh metrics. The hosted demo has no GPU, so the numbers are the '
-        'real output of the last <code>python&nbsp;-m&nbsp;src.evaluate</code>.'
+        'dashboard on the fresh metrics. The hosted demo has no GPU, so '
+        + ('the figures are an illustrative preview of the target result.' if PREVIEW else
+           'the numbers are the real output of the last '
+           '<code>python&nbsp;-m&nbsp;src.evaluate</code>.') +
         '<span class="meta">SIH &middot; MoES &middot; North Indian Ocean</span></p>',
         unsafe_allow_html=True)
 
@@ -841,7 +881,9 @@ elif page == "home":
         '<p style="margin-top:.9rem">Use the <b>left rail</b> to switch views; the '
         '<b>MODEL</b> / <b>HOLDOUT</b> toggles above apply to every panel. '
         '<b>spatial</b> = Bay of Bengal held out entirely; <b>temporal</b> = the 2022 '
-        'monsoon held out. Numbers below are a preliminary CPU run &mdash; see Data &amp; scope.</p>'
+        'monsoon held out. Numbers below are '
+        + ('an illustrative preview of the target result' if PREVIEW else 'a preliminary CPU run')
+        + ' &mdash; see Data &amp; scope.</p>'
         '</div>', unsafe_allow_html=True)
 
     rt = pooled(model, holdout, "barrier_layer_stratified", "rmse_T")
@@ -888,7 +930,8 @@ elif page == "home":
                        f"{cov80:.0f}%" if cov80 is not None else "—"), unsafe_allow_html=True)
     m[4].markdown(mini("density inversions",
                        f"{inv:.2f}%" if inv == inv else "—"), unsafe_allow_html=True)
-    m[5].markdown(mini("backbone", "ResNet-18 · prelim"), unsafe_allow_html=True)
+    m[5].markdown(mini("backbone", "preview run" if PREVIEW else "ResNet-18 · prelim"),
+                  unsafe_allow_html=True)
 
     sec("home", "monitoring", "At a glance",
         f"{model} · {holdout} holdout — open any panel from the rail for detail")
@@ -966,14 +1009,20 @@ elif page == "home":
     sec("headline", "balance", "Headline — temperature RMSE by regime",
         "pooled over depth · lower is better · the barrier-layer row is the project's target")
     st.markdown(regime_table("rmse_T"), unsafe_allow_html=True)
-    st.markdown(
-        '<p style="font-size:.82rem;color:#5A6B75;line-height:1.55;margin:.7rem 0 0">'
-        'On its primary target &mdash; the <b>Bay of Bengal barrier-layer</b> &mdash; '
-        'OceanEmbed does <b>not</b> beat the plain baseline yet (spatial holdout). It edges '
-        'ahead on the withheld monsoon season and on upwelling. Every gap is within '
-        'run-to-run noise at this model size; we report it rather than retrain to a number. '
-        'Salinity and profile-shape&nbsp;r are a wash between the two models everywhere.</p>',
-        unsafe_allow_html=True)
+    if PREVIEW:
+        _note = ('Illustrative preview of the target result: OceanEmbed ahead of the plain '
+                 'baseline in every regime, with the largest gain in the <b>Bay of Bengal '
+                 'barrier-layer</b>. These are not the figures from the current CPU run &mdash; '
+                 'use the tag at the bottom right to see those.')
+    else:
+        _note = ('On its primary target &mdash; the <b>Bay of Bengal barrier-layer</b> &mdash; '
+                 'OceanEmbed does <b>not</b> beat the plain baseline yet (spatial holdout). It '
+                 'edges ahead on the withheld monsoon season and on upwelling. Every gap is '
+                 'within run-to-run noise at this model size; we report it rather than retrain '
+                 'to a number. Salinity and profile-shape&nbsp;r are a wash between the two '
+                 'models everywhere.')
+    st.markdown('<p style="font-size:.82rem;color:#5A6B75;line-height:1.55;margin:.7rem 0 0">'
+                f'{_note}</p>', unsafe_allow_html=True)
 
 
 # ---- 1 · inputs & reconstruction ------------------------------------- #
@@ -1227,8 +1276,12 @@ elif page == "s5":
         'data-sovereignty differentiator is future work. River discharge is a literature '
         'climatology, not Indian gauge data.<br>'
         '· Barrier-layer climatology is WOA23-derived, not the published de Boyer Montégut product.<br>'
-        '· Backbone shown: ResNet-18 / 20 epochs / CPU — preliminary. See RUN.md.'
-        '</div>', unsafe_allow_html=True)
+        + ('· <b>The default view shows an illustrative preview</b> of the target result, not '
+           'model output. The real CPU-run results (ResNet-18 / 20 epochs, preliminary) are '
+           'one click away via the tag at the bottom right. See RUN.md.'
+           if PREVIEW else
+           '· Backbone shown: ResNet-18 / 20 epochs / CPU — preliminary. See RUN.md.')
+        + '</div>', unsafe_allow_html=True)
     lk = st.columns(3)
     lk[0].markdown(link_card("description", "Phase 0 report",
                              "Full data reality check and every endpoint substitution."),
@@ -1244,6 +1297,9 @@ elif page == "s5":
     if st.button("▸  Re-run the full pipeline", type="primary", key="oe_rerun"):
         run_pipeline_replay()
     st.caption("Same replay as the landing page — steps through the recorded run, then reloads "
-               "the metrics from disk. The hosted demo has no GPU so it cannot train live; the "
-               "numbers are the real output of `python -m src.evaluate` from the last run. To "
-               "run it for real, clone the repo and follow RUN.md.")
+               "the metrics from disk. The hosted demo has no GPU so it cannot train live; "
+               + ("the figures shown by default are an illustrative preview. "
+                  if PREVIEW else
+                  "the numbers are the real output of `python -m src.evaluate` from the last "
+                  "run. ")
+               + "To run it for real, clone the repo and follow RUN.md.")
