@@ -4,7 +4,7 @@ Regime-conditioned, physics-constrained deep learning for reconstructing
 subsurface **temperature and salinity profiles** from satellite surface fields,
 built for the **North Indian Ocean / Bay of Bengal**.
 
-Built as a hackathon project.
+Smart India Hackathon · Ministry of Earth Sciences · Space Technology theme.
 
 ---
 
@@ -28,7 +28,8 @@ this README says so (see [Results](#results)).
 
 ## Why this basin
 
-The Bay of Bengal is a basin that spawns some of the world's deadliest cyclones, and the one where subsurface reconstruction is hardest to get
+The Bay of Bengal is the basin most responsible for the Indian subcontinent's
+deadliest cyclones, and the one where subsurface reconstruction is hardest to get
 right. The Ganga–Brahmaputra–Irrawaddy rivers pour freshwater onto the surface,
 forming a low-salinity lens over denser, saltier water — a **salinity-driven
 barrier layer** that suppresses vertical mixing and decouples the surface
@@ -153,10 +154,12 @@ Details: [`outputs/metrics/PHASE3_FINDINGS.md`](outputs/metrics/PHASE3_FINDINGS.
 
 ## Limitations & what is future work
 
-- **Regional buoy / river-gauge data — NOT used.**
-  River discharge is a literature climatology (Papa et al. 2012 shape), **not**
-  gauge data. RAMA — the one reachable moored array with a BoB site — has no
-  data after 2020. Integrating regional buoy data is a roadmap item.
+- **India-specific observational data / "data sovereignty" — NOT delivered.**
+  INCOIS moored-buoy data is not machine-accessible (portal needs a registered
+  ESSO request; the Live Access Server is unreachable). River discharge is a
+  literature climatology (Papa et al. 2012 shape), **not** Indian gauge data
+  (CWC-classified). RAMA — the one reachable moored array with a BoB site — has no
+  data after 2020. The abstract's differentiator on this point is a roadmap item.
 - **Substituted products.** SST/SSH/SSS are NOAA-hosted, not the CMEMS/PODAAC
   products in the abstract (scientifically equivalent; just named accurately).
   The barrier-layer climatology is WOA23-derived, not the published de Boyer
@@ -193,7 +196,7 @@ opt-in: [`RUN.md`](RUN.md).
 
 ```
 src/data_access/   fetch_argo, fetch_satellite, fetch_woa, fetch_discharge,
-                   fetch_incois (moored-buoy probe + RAMA), common (reachable endpoints)
+                   fetch_incois (INCOIS probe + RAMA), common (reachable endpoints)
 src/regime/        build_climatology (WOA23 -> MLD/BLT/strat), regime_labels
 src/models/        backbone, conditioning (FiLM), physics_loss (EOS-80), oceanembed_model
 src/               data_pipeline (matching + holdouts), datasets, train, evaluate, config
