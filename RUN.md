@@ -42,7 +42,7 @@ python -m src.data_access.fetch_argo       --start 2021-01 --end 2023-12
 python -m src.data_access.fetch_satellite  --start 2021-01 --end 2023-12
 python -m src.data_access.fetch_woa
 python -m src.regime.build_climatology
-python -m src.data_access.fetch_incois            # INCOIS probe + RAMA download
+python -m src.data_access.fetch_incois            # moored-buoy probe + RAMA download
 python -m src.data_pipeline --patch 32            # -> data/processed/*.npz
 pytest -q                                         # regime independence + split integrity
 ```

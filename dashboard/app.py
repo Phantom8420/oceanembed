@@ -840,8 +840,7 @@ if page == "about":
         f'{_ic("sailing")}</a>'
         '<h1>OceanEmbed</h1>'
         '<div class="tag">Reading the ocean’s interior from its surface</div>'
-        '<div class="lines">A student project for the <b>Smart India Hackathon</b>, '
-        'under the <b>Ministry of Earth Sciences</b>. It reconstructs the '
+        '<div class="lines">A student <b>hackathon project</b>. It reconstructs the '
         'temperature and salinity of the water column &mdash; the part satellites '
         'cannot see &mdash; for the <b>Bay of Bengal</b>, using only what they can.'
         '<br><br>It is a proof of concept, evaluated honestly on held-out data. '
@@ -856,7 +855,7 @@ if page == "about":
         + ('the figures are an illustrative preview of the target result.' if PREVIEW else
            'the numbers are the real output of the last '
            '<code>python&nbsp;-m&nbsp;src.evaluate</code>.') +
-        '<span class="meta">SIH &middot; MoES &middot; North Indian Ocean</span></p>',
+        '<span class="meta">Hackathon project &middot; North Indian Ocean</span></p>',
         unsafe_allow_html=True)
 
 elif page == "home":
@@ -1262,7 +1261,7 @@ elif page == "s4":
 elif page == "s5":
     sec("s5", "info", "Data & scope")
     pdesc("Exactly what this build runs on and what it doesn't: every satellite / Argo / "
-          "climatology source and the substitutions made, what stayed out of scope (INCOIS "
+          "climatology source and the substitutions made, what stayed out of scope (moored "
           "buoys, real-time ingestion, float-deployment advice), links to the Phase-0 and "
           "Phase-3 write-ups, and a step-by-step replay of the training pipeline.")
     st.markdown(
@@ -1272,9 +1271,8 @@ elif page == "s5":
         '<b>not implemented</b> in this build.<br><br>'
         '· Satellite inputs are NOAA-hosted (OISST v2.1, CoastWatch blended SLA, CoastWatch '
         'SMAP SSS), substituted for CMEMS / PODAAC. No ocean-colour channel.<br>'
-        '· <b>INCOIS moored-buoy data could not be accessed</b> — the India-specific-data / '
-        'data-sovereignty differentiator is future work. River discharge is a literature '
-        'climatology, not Indian gauge data.<br>'
+        '· <b>Moored-buoy data was not used</b> — it is future work. River discharge is a literature '
+        'climatology, not gauge data.<br>'
         '· Barrier-layer climatology is WOA23-derived, not the published de Boyer Montégut product.<br>'
         + ('· <b>The default view shows an illustrative preview</b> of the target result, not '
            'model output. The real CPU-run results (ResNet-18 / 20 epochs, preliminary) are '

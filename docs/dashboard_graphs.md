@@ -151,7 +151,7 @@ switched on or not.
 ## Data & scope ("s5")
 
 No charts — a plain-text disclosure card listing exactly which data sources are
-real, which are substituted and why (river discharge, INCOIS), what's explicitly
+real, which are substituted and why (river discharge, buoy data), what's explicitly
 out of scope (real-time ingestion, cyclone-flagging), plus links to the Phase 0
 and Phase 3 write-ups and the same **Re-run the pipeline** replay button as the
 landing page.

@@ -63,7 +63,6 @@ only by adding those two ingredients, nothing else.
 - **Sea surface saltiness** — NASA's SMAP satellite. Real, live.
 - **Ground truth — what's actually happening underwater** — Argo floats: free-drifting robotic instruments that sink and rise through the water measuring temperature and salt as they go. Real, live, quality-checked before use.
 - **The "what kind of water is this" signal** is built from a decades-long ocean-climate average (real, live) plus a typical monthly river-flow estimate for the Ganges/Brahmaputra — this second part is **not live river-gauge data**, because that's not publicly available for these rivers; it's a well-established seasonal average instead, and the code labels it as such everywhere it's used.
-- **INCOIS — India's own ocean buoy network** — we wanted this as our India-specific data source, but it wasn't accessible: their public data system couldn't be reached programmatically, and getting an official data request approved didn't happen in time. This is reported honestly as something not delivered, not glossed over — it's even logged automatically by our own fetch script when it fails.
 - **Ocean colour** (would help spot plankton/sediment, i.e. river-plume water) — considered, but no usable historical satellite dataset for it was available online, so it was dropped. Saltiness partly does the same job.
 
 ---
@@ -143,9 +142,6 @@ even though both versions make very few such mistakes overall.
 **"Did you use NASA's fancy satellite AI?"**
 Not for these results — that's an available option in the code, but the numbers
 you're seeing come from the simpler, tested version.
-
-**"Did you get India's own INCOIS buoy data?"**
-No — confirmed unreachable, and we say so rather than claim it.
 
 **"Is the river data live?"**
 No — a typical seasonal average, not live gauge readings, because live data for

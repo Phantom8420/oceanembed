@@ -366,7 +366,7 @@ def fig9_phases():
         prev = b; x += 19.4
     ax.text(50, 28,
             "Gates (checklist, must pass before the next phase):\n"
-            "0->1  report reviewed (INCOIS / discharge flagged)\n"
+            "0->1  report reviewed (buoy / discharge flagged)\n"
             "1->2  independence test passes + split-disjoint assertion\n"
             "2->3  both models train, no NaN, checkpoints saved\n"
             "3->4  csv is script-generated + at least one regime plot",

@@ -58,7 +58,7 @@ Does the regime-conditioned, physics-constrained model actually beat a plain bas
 ## 6. Data & Scope
 The honesty page — plain-text disclosure:
 - Which data sources are real vs. substituted.
-- One acknowledged gap: **INCOIS buoy data** — explicitly labeled future work, not hidden.
+- One acknowledged gap: **moored-buoy data** — explicitly labeled future work, not hidden.
 
 ---
 
@@ -66,5 +66,5 @@ The honesty page — plain-text disclosure:
 - *"Why not a random train/test split?"* → Random split leaks nearby points; geographic/monsoon holdout tests real generalization.
 - *"λ-sweep showed no difference — so does the physics penalty matter?"* → Reported honestly rather than tuned away; see Model vs Baseline's density-inversion check for evidence the penalty still helps.
 - *"How do you know the regime map isn't leaking info?"* → Built from climatology + river discharge only, non-circularity test enforced in code.
-- *"Why are these preliminary numbers?"* → Currently a CPU run; disclosed on the app itself as future scaling work, same as INCOIS.
-- *"What's still missing?"* → INCOIS buoy data — flagged, not hidden.
+- *"Why are these preliminary numbers?"* → Currently a CPU run; disclosed on the app itself as future scaling work, same as buoy data.
+- *"What's still missing?"* → moored-buoy data — flagged, not hidden.

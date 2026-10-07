@@ -9,10 +9,10 @@ If at any point you (Claude Code) are about to write a comment, README line, or 
 ## 0. Project Identity & Non-Negotiable Framing
 
 **Name:** OceanEmbed
-**Problem Statement:** Satellite Embedding-Based Deep Learning Framework for Reconstruction of Subsurface Ocean Temperature from Surface Satellite Observations (MoES, SIH)
+**Problem Statement:** Satellite Embedding-Based Deep Learning Framework for Reconstruction of Subsurface Ocean Temperature from Surface Satellite Observations (hackathon)
 
 **What we are claiming (memorize this, it governs every design choice below):**
-We combine three independently-proven techniques — (1) transfer learning from a pretrained geospatial foundation model, (2) regime-conditioning derived from data sources independent of the prediction inputs, (3) a physics-consistency loss in the style of OSnet — and apply this combination to the Bay of Bengal / North Indian Ocean, a basin underserved by existing published work (which concentrates on the Gulf Stream, South China Sea, Kuroshio Extension, and global averages), using India-specific observational data that international groups rarely integrate.
+We combine three independently-proven techniques — (1) transfer learning from a pretrained geospatial foundation model, (2) regime-conditioning derived from data sources independent of the prediction inputs, (3) a physics-consistency loss in the style of OSnet — and apply this combination to the Bay of Bengal / North Indian Ocean, a basin underserved by existing published work (which concentrates on the Gulf Stream, South China Sea, Kuroshio Extension, and global averages), using regional observational data that international groups rarely integrate.
 
 **What we are explicitly NOT claiming:**
 - Not a new architecture family or algorithm
@@ -104,12 +104,12 @@ For each source below, write a small standalone script in `src/data_access/check
 3. **Satellite SSH/ADT** — try CMEMS. Note: CMEMS typically requires account registration; if that approval isn't instant, log it as blocked and fall back to a static sample SSH file (check if PODAAC or a public Zenodo/OpenDAP mirror has a usable substitute).
 4. **SMAP SSS** — try PODAAC's SMAP L3 SSS product.
 5. **Barrier-layer climatology** — search for a machine-readable version of published North Indian Ocean barrier-layer thickness climatology (Thadathil et al. or similar). If none is downloadable as data (only as figures in a paper), this becomes a **manually digitized static lookup table** keyed by month × lat/lon bin, built by reading approximate values off published figures. Flag this explicitly — it is a legitimate but low-precision substitute, and must be described accurately (not implied to be a live dataset) in any documentation.
-6. **River discharge (Ganga-Brahmaputra)** — check India-WRIS, CWC public portals, or global river discharge datasets (e.g. GRDC) for a station near the delta. If inaccessible in time, fall back to a static seasonal climatological discharge curve (monthly average, not real observations) and label it as such everywhere it's used.
-7. **INCOIS buoy data** — check INCOIS's public data portal / OGD platform for moored buoy time series. This is the highest-risk item and the core of your "India-specific data" differentiator claim.
+6. **River discharge (Ganga-Brahmaputra)** — check public portals or global river discharge datasets (e.g. GRDC) for a station near the delta. If inaccessible in time, fall back to a static seasonal climatological discharge curve (monthly average, not real observations) and label it as such everywhere it's used.
+7. **Regional moored buoy data** — check public data portals for moored buoy time series. This is the highest-risk item.
 
 **Output required from this phase:** a markdown table in `data/raw/phase0_report.md` with columns: Source | Status (Accessible / Accessible-with-delay / Unavailable / Substitute-used) | Notes | Substitute-if-any.
 
-**STOP. Do not proceed to Phase 1 until I have reviewed `phase0_report.md`.** If INCOIS or river discharge came back Unavailable, tell me explicitly — we need to revise the abstract's "data sovereignty" claim before continuing, not after the demo is built around a claim we can't support.
+**STOP. Do not proceed to Phase 1 until I have reviewed `phase0_report.md`.** If buoy or river discharge came back Unavailable, tell me explicitly — we need to revise the abstract before continuing, not after the demo is built around a claim we can't support.
 
 ---
 
@@ -253,7 +253,7 @@ Sections, in order:
 ### 7.2 README
 Write this last. Structure:
 - Problem & why this basin (barrier layer, underserved region — from the abstract)
-- What we built vs. what's future work (be explicit and match Phase 0's actual findings — if INCOIS data didn't work out, the README must say so, not silently drop the claim)
+- What we built vs. what's future work (be explicit and match Phase 0's actual findings — if buoy data didn't work out, the README must say so, not silently drop the claim)
 - Architecture diagram (can be the ASCII sketch from section 5.1, cleaned up)
 - Results table (per-regime RMSE)
 - Honest limitations section
